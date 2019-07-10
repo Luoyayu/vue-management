@@ -107,7 +107,7 @@
             },
 
             change(newstatus, obj) {
-                var returnobjects_ = {
+                const returnobjects_ = {
                     wk_number: null,
                     qj_date: null,
                     permission: null
@@ -146,41 +146,39 @@
                 // var sentArray = [];//array.lenth=tempobject.lenth
                 const sent = this.sendArray;
                 // eslint-disable-next-line
-                const data = {};
-                data["params"] = sent;
-                axios
-                    .get(APIUpdateQingjiaState, data)
-                    .then(response => {
-                        alert("提交成功" + response.data);
-                    })
-                    .catch(error => {
-                        alert("提交失败" + error);
-                    });
+                // const data = {};
+                // data["params"] = sent;
+                axios.get(APIUpdateQingjiaState, {
+                    params: {
+                        data: JSON.stringify(sent)
+                    }
+                }).then(response => {
+                    alert("提交成功" + response.data);
+                }).catch(error => {
+                    alert("提交失败" + error);
+                });
             },
 
             get_action() {
-                axios
-                    .get(APIGetAllQingjiaByDpNumber, {
-                        params: {
-                            dp_number: sessionStorage.getItem("adminDpNumber")
-                        }
-                    })
-                    .then(resp => {
-                        this.tempobjects = resp.data.data.result;
-                        for (let i = 0; i < this.tempobjects.length; i++) {
-                            const date = new Date(this.tempobjects[i].qj_date);
-                            const Y = date.getFullYear() + "-";
-                            const M =
-                                (date.getMonth() + 1 < 10
-                                    ? "0" + (date.getMonth() + 1)
-                                    : date.getMonth() + 1) + "-";
-                            const D = date.getDate();
-                            this.tempobjects[i]["show_date"] = Y + M + D;
-                        }
-                    })
-                    .catch(function (error) {
-                        alert(error);
-                    });
+                axios.get(APIGetAllQingjiaByDpNumber, {
+                    params: {
+                        dp_number: sessionStorage.getItem("adminDpNumber")
+                    }
+                }).then(resp => {
+                    this.tempobjects = resp.data.data.result;
+                    for (let i = 0; i < this.tempobjects.length; i++) {
+                        const date = new Date(this.tempobjects[i].qj_date);
+                        const Y = date.getFullYear() + "-";
+                        const M =
+                            (date.getMonth() + 1 < 10
+                                ? "0" + (date.getMonth() + 1)
+                                : date.getMonth() + 1) + "-";
+                        const D = date.getDate();
+                        this.tempobjects[i]["show_date"] = Y + M + D;
+                    }
+                }).catch(function (error) {
+                    alert(error);
+                });
             }
         },
         // 员工号

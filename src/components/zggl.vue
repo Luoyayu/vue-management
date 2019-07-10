@@ -439,8 +439,8 @@
             update(e) {
                 let file = e.target.files[0];
                 // alert("文件大小" + file.size + "\n文件名" + file.wk_name);
-                if (file.wk_name !== "WorkerTemplete.xlsx") {
-                    alert("请将文件名命名为'WorkerTemplete.xlsx'!");
+                if (file.name !== "WorkerTemplate.xlsx") {
+                    alert("请将文件名命名为'WorkerTemplate.xlsx'!");
                     this.re_select_excel();
                     return
                 }
@@ -468,6 +468,7 @@
 
                     this.showExcelUploadLoading = false;
                     this.re_select_excel();
+                    this.getAllUsers();
                 });
 
                 // POSE END
