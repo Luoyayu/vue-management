@@ -12,6 +12,7 @@
     "core-js": "^2.6.5",
     "qs": "latest",
     "vue": "^2.6.10",
+    "vue-json-excel": "^0.2.98",
     "vuelidate": "^0.7.4",
     "vuetify": "^1.5.16"
   },

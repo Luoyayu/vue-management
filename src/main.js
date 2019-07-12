@@ -13,6 +13,9 @@ import 'vue-material/dist/theme/default.css'
 import 'vuetify/dist/vuetify.min.css'
 import VeeValidate from 'vee-validate'
 
+import JsonExcel from 'vue-json-excel'
+Vue.component('downloadExcel', JsonExcel);
+
 Vue.use(VeeValidate);
 Vue.use(Router);
 Vue.use(VueMaterial);

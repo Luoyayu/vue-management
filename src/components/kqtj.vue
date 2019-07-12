@@ -7,6 +7,7 @@
                 src="https://cdn.vuetifyjs.com/images/backgrounds/vbanner.jpg"
                 id="kqtj-parallax"
         >
+
             <!--发送 日期（月份） 返回姓名 工号 日期（月份） 出勤次数 缺勤次数 请假次数-->
             <div id="kqtj-main">
                 <v-data-table :headers="headers" :items="objects" class="elevation-1">
@@ -36,6 +37,15 @@
                                 <v-dialog v-model="dialog" max-width="600px">
                                     <template v-slot:activator="{ on }">
                                         <v-btn color="primary" dark v-on="on">发送日期</v-btn>
+                                        <download-excel id="download-excel"
+                                                        class="v-btn flat"
+                                                        :data="objects"
+                                                        worksheet="My Worksheet"
+                                                        name="考勤统计.xls">
+
+                                            导出成Excel
+
+                                        </download-excel>
                                     </template>
                                     <v-card>
                                         <v-card-title>
@@ -59,6 +69,7 @@
                                             <v-spacer></v-spacer>
 
                                             <v-btn color="blue darken-1" flat @click="post_action">发送</v-btn>
+
                                         </v-card-actions>
                                     </v-card>
                                 </v-dialog>
@@ -121,8 +132,9 @@
 
                 axios.post(APIGetDepartmentMonthlyAttendanceRecord, this.postsource)
                     .then(response => {
-                        if (response.data.errno === 3000) {
+                        if (response.data.errno === "3000") {
                             this.objects = response.data.res;
+                            this.dialog = false
                         }
                     })
                     .catch(error => {
@@ -142,6 +154,11 @@
     #kqtj-main {
         width: 90%;
         margin: 25px auto;
+    }
+
+    #download-excel {
+        width: 120px;
+        margin: 4px 2px;
     }
 
 </style>

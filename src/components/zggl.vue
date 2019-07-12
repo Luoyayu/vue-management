@@ -92,14 +92,16 @@
                                         <v-flex xs12 sm6 md4>
                                             <v-text-field v-model="editedItem.wk_name" label="姓名"></v-text-field>
                                         </v-flex>
-                                        <v-flex xs12 sm6 md4>
-                                            <v-select
-                                                    :items="['男', '女']"
-                                                    :placeholder="editedItem.wk_sex"
-                                                    v-model="editedItem.wk_sex"
-                                                    label="性别"
-                                            ></v-select>
-                                        </v-flex>
+
+                                        <!--                                        FIXME: 功能移除-->
+                                        <!--                                        <v-flex xs12 sm6 md4>-->
+                                        <!--                                            <v-select-->
+                                        <!--                                                    :items="['男', '女']"-->
+                                        <!--                                                    :placeholder="editedItem.wk_sex"-->
+                                        <!--                                                    v-model="editedItem.wk_sex"-->
+                                        <!--                                                    label="性别"-->
+                                        <!--                                            ></v-select>-->
+                                        <!--                                        </v-flex>-->
 
                                         <v-flex xs12 sm6 md4>
                                             <v-text-field v-model="editedItem.dp_number" label="部门"></v-text-field>
@@ -113,7 +115,7 @@
                                             <v-text-field v-model="editedItem.wk_pass" label="密码"></v-text-field>
                                         </v-flex>
 
-
+                                        <!--FIXME: 功能移除-->
                                         <!--                                    <v-flex xs12 sm6 md4>-->
                                         <!--                                        <v-select-->
                                         <!--                                                :items="['待审核', '未请假', '审核通过', '审核未通过']"-->
@@ -122,6 +124,7 @@
                                         <!--                                                label="请假状态"-->
                                         <!--                                        ></v-select>-->
                                         <!--                                    </v-flex>-->
+
                                     </v-layout>
                                 </v-container>
                             </v-card-text>
@@ -156,7 +159,6 @@
 
                         <td>{{ props.item.wk_number }}</td>
                         <td>{{ props.item.wk_name }}</td>
-                        <td>{{ props.item.wk_sex }}</td>
                         <td>{{ props.item.dp_number }}</td>
                         <td>{{ props.item.wk_phonenumber }}</td>
                         <td>{{ props.item.wk_pass }}</td>
@@ -170,6 +172,7 @@
                         <!--                        </td>-->
 
                         <td class="layout px-0">
+
                             <!--                        FIXME: 功能移动-->
                             <!--                            &lt;!&ndash;                        请假批准&ndash;&gt;-->
                             <!--                            <v-btn flat icon color="blue lighten-2"-->
@@ -199,7 +202,7 @@
                     </template>
 
                     <template v-slot:no-data>
-                        <v-btn color="primary" @click="getAllUsers">刷新</v-btn>
+                        <v-btn color="primary" @click="getAllUsers">该部门未获取到职工，请尝试刷新</v-btn>
                     </template>
 
                 </v-data-table>
@@ -315,7 +318,14 @@
     import qs from "qs";
     import axios from 'axios';
 
-    import {APIDeleteWorks, APIGetAllWorkers, APIuploadExcel, APIWorkerTemplete} from "../../global";
+    import {
+        APIAddOneWorker,
+        APIDeleteWorks,
+        APIGetAllWorkers,
+        APIUpdateOneWorker,
+        APIuploadExcel,
+        APIWorkerTemplete
+    } from "../../global";
 
     export default {
 
@@ -358,10 +368,6 @@
                     value: 'wk_name'
                 },
                 {
-                    text: '性别',
-                    value: 'wk_sex'
-                },
-                {
                     text: '部门',
                     value: 'dp_number'
                 },
@@ -397,7 +403,7 @@
             editedItem: {
                 wk_number: '',
                 wk_name: '',
-                wk_sex: '',
+                // wk_sex: '',
                 dp_number: '',
                 wk_phonenumber: '',
                 wk_pass: '',
@@ -409,7 +415,7 @@
                 wk_number: '',
                 wk_name: null,
                 dp_number: null,
-                wk_sex: null,
+                // wk_sex: null,
                 wk_phonenumber: null,
                 wk_pass: null,
                 // qingjiaReason: null,
@@ -429,11 +435,16 @@
             },
         },
 
-        created() {
+        mounted() {
             this.getAllUsers()
         },
 
         methods: {
+            showErrorDialog(errorDialogTitle, errorDialogContent) {
+                this.errorDialog = true;
+                this.errorDialogTitle = errorDialogTitle;
+                this.errorDialogContent = errorDialogContent;
+            },
 
             // 响应上传的change事件
             update(e) {
@@ -484,8 +495,14 @@
 
             // 获得所有用户的GET
             getAllUsers() {
-                axios.get(APIGetAllWorkers, {params: {wk_number: this.adminDpNumber}}).then(resp => {
-                    this.user = resp.data.data
+                axios.get(APIGetAllWorkers, {params: {dp_number: this.adminDpNumber}}).then(resp => {
+                    // eslint-disable-next-line no-console
+                    console.log(resp.data);
+                    if (resp.data.errno === "3000") {
+                        this.user = resp.data.res
+                    } else {
+                        alert(resp.data.errmsg);
+                    }
                 }).catch(error => {
                     alert(error)
                 });
@@ -504,7 +521,6 @@
                     selectedArray.push(this.selected[i].wk_number);
                 }
 
-
                 axios.post(APIDeleteWorks, qs.stringify({wk_numbers: selectedArray.toString()})).then(resp => {
                     if (resp.data.errorn !== "1000") {
                         alert(resp.data)
@@ -512,17 +528,24 @@
                         this.selected.forEach(v => (
                             this.user.splice(v, 1)
                         ));
+                        this.selected = [];
                     }
+                    this.getAllUsers();
                 })
             },
 
             deleteItem(item) {
                 const index = this.user.indexOf(item);
-                confirm('确认删除该员工吗?') && this.user.splice(index, 1);
+                // eslint-disable-next-line no-console
+                console.log(item);
                 let wk_number = this.user[index].wk_number;
+                confirm('确认删除该员工吗?') && this.user.splice(index, 1);
                 axios.post(APIDeleteWorks, qs.stringify({wk_numbers: wk_number.toString()})).then(resp => {
                     if (resp.data.errorn !== "1000") {
                         alert(resp.data)
+                    } else {
+                        this.selected = [];
+                        this.getAllUsers();
                     }
                 });
             },
@@ -537,10 +560,47 @@
 
             save() {
                 if (this.editedIndex > -1) {
-                    Object.assign(this.user[this.editedIndex], this.editedItem)
+                    axios.post(APIUpdateOneWorker, qs.stringify({
+                        wk_number: this.editedItem.wk_number,
+                        wk_name: this.editedItem.wk_name,
+                        dp_number: this.editedItem.dp_number,
+                        wk_phonenumber: this.editedItem.wk_phonenumber,
+                        wk_pass: this.editedItem.wk_pass,
+                    })).then(resp => {
+                        if (resp.data.errno !== "3000") {
+                            this.showErrorDialog('更新职工信息失败', resp.data.errmsg);
+                        }
+                        Object.assign(this.user[this.editedIndex], this.editedItem);
+                        this.errorDialog = false;
+                    }).catch(err => {
+                        alert(err);
+                    })
                 } else {
-                    this.user.push(this.editedItem)
+                    // 新增员工
+                    // eslint-disable-next-line no-console
+                    console.log("this.user", this.user);
+                    // eslint-disable-next-line no-console
+                    console.log("this.user type is", typeof (this.user));
+
+                    axios.post(APIAddOneWorker, qs.stringify({
+                        wk_number: this.editedItem.wk_number,
+                        wk_name: this.editedItem.wk_name,
+                        dp_number: this.editedItem.dp_number,
+                        wk_phonenumber: this.editedItem.wk_phonenumber,
+                        wk_pass: this.editedItem.wk_pass,
+                    })).then(resp => {
+                        if (resp.data.errno !== "3000") {
+                            this.showErrorDialog('新增职工信息失败', resp.data.errmsg);
+                        }else {
+                            this.user.push(this.editedItem);
+                            this.errorDialog = false;
+                            this.getAllUsers();
+                        }
+                    }).catch(err => {
+                        alert(err)
+                    })
                 }
+                this.getAllUsers();
                 this.close()
             },
 
@@ -563,24 +623,25 @@
                 }
                 alert("审核未通过")
             },
+            // FIXME: 功能移动
+            // ShowMoreDialog_qingjiaYES() {
+            //     this.ShowMoreDialog = false;
+            //     this.qingjiaYES(this.selectedUserID)
+            // },
+            // FIXME: 功能移动
+            // ShowMoreDialog_qingjiaNO() {
+            //     this.ShowMoreDialog = false;
+            //     this.qingjiaNO(this.selectedUserID)
+            // },
 
-            ShowMoreDialog_qingjiaYES() {
-                this.ShowMoreDialog = false;
-                this.qingjiaYES(this.selectedUserID)
-            },
-
-            ShowMoreDialog_qingjiaNO() {
-                this.ShowMoreDialog = false;
-                this.qingjiaNO(this.selectedUserID)
-            },
-
-            showQingjiaMore(wk_number) {
-                this.selectedUserID = wk_number;
-                this.selectedQingjiaMore.qingjia_reason = this.user[wk_number - 1].qingjiaReason.qingjia_reason;
-                this.selectedQingjiaMore.qingjia_img = this.user[wk_number - 1].qingjiaReason.qingjia_img;
-                this.ShowMoreDialog = true;
-
-            },
+            // FIXME: 功能移动
+            // showQingjiaMore(wk_number) {
+            //     this.selectedUserID = wk_number;
+            //     this.selectedQingjiaMore.qingjia_reason = this.user[wk_number - 1].qingjiaReason.qingjia_reason;
+            //     this.selectedQingjiaMore.qingjia_img = this.user[wk_number - 1].qingjiaReason.qingjia_img;
+            //     this.ShowMoreDialog = true;
+            //
+            // },
 
             // FIXME: 功能移动
             /*qingjiaState2txt(qingjiaState) {
