@@ -63,7 +63,8 @@
         // },
         methods: {
             backLogin() {
-                this.$router.push({name: 'Login'})
+                this.$router.push({name: 'Login'});
+                sessionStorage.setItem("adminDpNumber", undefined);
             },
             // tabChange(tabItem) {
             //     this.currentView = tabItem;

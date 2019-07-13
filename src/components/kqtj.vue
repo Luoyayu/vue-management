@@ -126,6 +126,7 @@
 
             post_action() {
                 // month year dp_number
+                if (this.month === "" || this.year === "") return;
                 this.postsource.set("dp_number", sessionStorage.getItem("adminDpNumber"));
                 this.postsource.set("month", this.month);
                 this.postsource.set("year", this.year);

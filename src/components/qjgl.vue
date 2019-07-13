@@ -30,7 +30,7 @@
                         select-all
                         :headers="headers"
                         :items="tempobjects"
-                        item-key="wk_number"
+                        :item-key="id"
                         class="elevation-1"
                 >
                     <template v-slot:items="props">
@@ -63,6 +63,7 @@
                         </td>
                     </template>
                 </v-data-table>
+                <!--                <p>{{selected}}</p>-->
             </div>
         </v-parallax>
 
@@ -108,6 +109,7 @@
                 flag: false,
                 imgurl: "",
                 selected: [],
+
                 headers: [
                     {text: "员工号", align: "left", value: "wk_number"},
                     {text: "请假时间", align: "left", value: "qj_date"},
@@ -160,6 +162,7 @@
                     this.sendArray.splice(i, 1, returnobjects_);
                 }
                 this.flag = true;
+
             },
 
             upload() {
@@ -171,7 +174,15 @@
                         }
                     })
                     .then(response => {
-                        alert("提交成功" + response.data);
+                        if (response.data.errno === "1000") {
+                            alert("提交成功");
+
+                            // location.reload()
+                            this.get_action();
+                            this.selected = []
+                        } else {
+                            alert("提交失败");
+                        }
                     })
                     .catch(error => {
                         alert("提交失败" + error);
@@ -196,6 +207,7 @@
                                     : date.getMonth() + 1) + "-";
                             const D = date.getDate();
                             this.tempobjects[i]["show_date"] = Y + M + D;
+                            this.tempobjects[i]["id"] = i;
                         }
                     })
                     .catch(function (error) {
@@ -208,6 +220,7 @@
         mounted() {
             this.get_action();
         },
+
         created() {
             if (sessionStorage.getItem("userID") == null) {
                 alert("非法登录!");

@@ -1,5 +1,5 @@
 export const APIuploadExcel = "/api/admin/uploadworkers";
-export const APIWorkerTemplete = "https://luoyayu.cn/WorkerTemplete.xlsx";
+export const APIWorkerTemplete = "https://luoyayu.cn/WorkerTemplate.xlsx";
 
 export const APIAdminLogin = "/api/admin/login";
 export const APIGetAllWorkers = "/api/admin/searchworker";

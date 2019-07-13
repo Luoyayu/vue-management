@@ -149,16 +149,19 @@
                 if (name === "" || name == null || pass === "" || pass == null) {
                     return;
                 }
+
                 const ruleForm = {
                     userID: this.userID,
                     password: this.password
                 };
+
                 Axios.post(APIAdminLogin, qs.stringify(ruleForm))
                     .then(res => {
-                        if (res.data.data === "fail") {
+                        if (res.data.errno !== "1000") {
                             this.showErrorDialog("登录失败", "用户ID或密码错误，请重新输入");
                             this.userID = "";
                             this.password = "";
+                            sessionStorage.setItem("userID", null);
                         } else {
                             sessionStorage.setItem("userID", this.userID);
                             if (this.rememberMe)
@@ -166,11 +169,15 @@
                             else this.clearCookie();
                             Axios.get(APIGetDpNumberByUserID, {params: {wk_number: this.userID}}).then(resp => {
                                 sessionStorage.setItem("adminDpNumber", resp.data.data);
+                                this.$router.push({name: 'Zggl'})
                             });
-                            this.$router.push({name: 'Zggl'})
+
                         }
                     }).catch(error => {
-                    this.showErrorDialog("登录失败", error);
+                    if (error.toString().indexOf("timeout") !== -1)
+                        this.showErrorDialog("登录失败", "服务器错误: 连接超时");
+                    else
+                        this.showErrorDialog("登录失败", "服务器错误: " + error);
                 })
             },
 

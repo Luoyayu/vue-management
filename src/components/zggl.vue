@@ -68,16 +68,13 @@
                         >
                     </v-menu>
 
-
-                    <v-dialog v-model="dialog" max-width="500px" id="dialog-0">
-                        <template v-slot:activator="{ on }">
-                            <v-btn color="primary" dark class="mb-2" v-on="on">
-                                <v-icon>person_add</v-icon>
-                                新建职工
-                            </v-btn>
-                        </template>
-
-
+                    <template>
+                        <v-btn color="primary" dark class="mb-2" @click="newUser">
+                            <v-icon>person_add</v-icon>
+                            新建职工
+                        </v-btn>
+                    </template>
+                    <v-dialog v-model="dialog" max-width="500px" persistent id="dialog-0">
                         <v-card id="dialog-card">
                             <v-card-title id="dialog-card-title">
                                 <span class="headline">{{ formTitle }}</span>
@@ -87,7 +84,8 @@
                                 <v-container grid-list-md id="dialog-container">
                                     <v-layout wrap>
                                         <v-flex xs12 sm6 md4>
-                                            <v-text-field v-model="editedItem.wk_number" label="用户ID"></v-text-field>
+                                            <v-text-field v-model="editedItem.wk_number" label="用户ID"
+                                                          :disabled="editID"></v-text-field>
                                         </v-flex>
                                         <v-flex xs12 sm6 md4>
                                             <v-text-field v-model="editedItem.wk_name" label="姓名"></v-text-field>
@@ -104,7 +102,8 @@
                                         <!--                                        </v-flex>-->
 
                                         <v-flex xs12 sm6 md4>
-                                            <v-text-field v-model="editedItem.dp_number" label="部门"></v-text-field>
+                                            <v-text-field v-model="editedItem.dp_number" label="部门"
+                                                          disabled></v-text-field>
                                         </v-flex>
 
                                         <v-flex xs12 sm6 md4>
@@ -281,7 +280,7 @@
                     <v-dialog v-model="showUploadCallBackDialog" width="500">
                         <v-card>
                             <v-card-title class="headline grey lighten-2" primary-title>
-                                上传错误
+                                上传结果
                             </v-card-title>
                             <v-card-text>
                                 {{UploadCallBackDialogContent }}
@@ -318,6 +317,8 @@
     import qs from "qs";
     import axios from 'axios';
 
+    axios.defaults.timeout = 5000;
+
     import {
         APIAddOneWorker,
         APIDeleteWorks,
@@ -334,11 +335,12 @@
         components: {Navigation},
         data: () => ({
 
+            editID: false,
             errorDialog: false, // 统一的弹窗
             errorDialogTitle: "",
             errorDialogContent: "",
 
-            adminDpNumber: "001", //管理员部门号
+            adminDpNumber: sessionStorage.getItem("adminDpNumber"), //管理员部门号
 
             showUploadCallBackDialog: false,
             UploadCallBackDialogContent: "",
@@ -404,7 +406,7 @@
                 wk_number: '',
                 wk_name: '',
                 // wk_sex: '',
-                dp_number: '',
+                dp_number: sessionStorage.getItem("adminDpNumber"),
                 wk_phonenumber: '',
                 wk_pass: '',
                 // qingjiaReason: {},
@@ -414,7 +416,7 @@
             defaultItem: {
                 wk_number: '',
                 wk_name: null,
-                dp_number: null,
+                dp_number: sessionStorage.getItem("adminDpNumber"),
                 // wk_sex: null,
                 wk_phonenumber: null,
                 wk_pass: null,
@@ -435,11 +437,16 @@
             },
         },
 
-        mounted() {
+        created() {
             this.getAllUsers()
         },
 
         methods: {
+            newUser() {
+                this.dialog = true;
+                this.editID = false;
+            },
+
             showErrorDialog(errorDialogTitle, errorDialogContent) {
                 this.errorDialog = true;
                 this.errorDialogTitle = errorDialogTitle;
@@ -455,7 +462,7 @@
                     this.re_select_excel();
                     return
                 }
-                this.upload_file.set("dp_number", "0001");
+                this.upload_file.set("dp_number", sessionStorage.getItem("adminDpNumber"));
                 this.upload_file.set('excel', file);
                 this.confirmUpload = true;
             },
@@ -472,10 +479,11 @@
 
                 axios.post(APIuploadExcel, this.upload_file, config).then(response => {
                     this.confirmUpload = false;
-                    if (response.data.erron[0] !== "2") {
+                    // if (response.data.errno !== "3000") {
                         this.showUploadCallBackDialog = true;
-                        this.UploadCallBackDialogContent = response.data.errmsg;
-                    }
+                        if(response.data.errmsg.length === 0) this.UploadCallBackDialogContent="全部导入成功";
+                        else this.UploadCallBackDialogContent = response.data.errmsg;
+                    // }
 
                     this.showExcelUploadLoading = false;
                     this.re_select_excel();
@@ -510,8 +518,14 @@
 
             editItem(item) {
                 this.editedIndex = this.user.indexOf(item);
+                // eslint-disable-next-line no-console
+                console.log("想要修改的信息:", item.wk_name);
+
                 this.editedItem = Object.assign({}, item);
-                this.dialog = true
+                this.editID = true;
+                this.dialog = true;
+
+
                 // POST
             },
 
@@ -522,7 +536,7 @@
                 }
 
                 axios.post(APIDeleteWorks, qs.stringify({wk_numbers: selectedArray.toString()})).then(resp => {
-                    if (resp.data.errorn !== "1000") {
+                    if (resp.data.errno !== "1000") {
                         alert(resp.data)
                     } else {
                         this.selected.forEach(v => (
@@ -541,7 +555,7 @@
                 let wk_number = this.user[index].wk_number;
                 confirm('确认删除该员工吗?') && this.user.splice(index, 1);
                 axios.post(APIDeleteWorks, qs.stringify({wk_numbers: wk_number.toString()})).then(resp => {
-                    if (resp.data.errorn !== "1000") {
+                    if (resp.data.errno !== "1000") {
                         alert(resp.data)
                     } else {
                         this.selected = [];
@@ -559,6 +573,16 @@
             },
 
             save() {
+                if (this.editedItem.wk_number.length !== 8) {
+                    this.showErrorDialog("更新职工信息错误", "职工ID需为8位!");
+                    return
+                }
+
+                if(this.editedItem.wk_phonenumber.length !== 11) {
+                    this.showErrorDialog("更新职工信息错误", "手机号码需为11位!");
+                    return
+                }
+
                 if (this.editedIndex > -1) {
                     axios.post(APIUpdateOneWorker, qs.stringify({
                         wk_number: this.editedItem.wk_number,
@@ -567,13 +591,18 @@
                         wk_phonenumber: this.editedItem.wk_phonenumber,
                         wk_pass: this.editedItem.wk_pass,
                     })).then(resp => {
+                        // eslint-disable-next-line no-console
+                        console.log("请求更新信息, 返回值", resp.data.errno);
                         if (resp.data.errno !== "3000") {
+                            // eslint-disable-next-line no-console
+                            console.log("错误码:", resp.data.errno);
                             this.showErrorDialog('更新职工信息失败', resp.data.errmsg);
                         }
-                        Object.assign(this.user[this.editedIndex], this.editedItem);
-                        this.errorDialog = false;
+                        this.getAllUsers();
+                        // Object.assign(this.user[this.editedIndex], this.editedItem);
+                        // this.errorDialog = false;
                     }).catch(err => {
-                        alert(err);
+                        alert("出错了！", err);
                     })
                 } else {
                     // 新增员工
@@ -591,7 +620,7 @@
                     })).then(resp => {
                         if (resp.data.errno !== "3000") {
                             this.showErrorDialog('新增职工信息失败', resp.data.errmsg);
-                        }else {
+                        } else {
                             this.user.push(this.editedItem);
                             this.errorDialog = false;
                             this.getAllUsers();
